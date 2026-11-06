@@ -3,3 +3,17 @@
 @media(max-width:700px){.topbar{height:70px;padding:0 6%}.edition{display:none}.topbar-right{gap:0}.hero{height:750px;min-height:calc(100svh - 70px);padding-top:115px}.hero h1{font-size:clamp(52px,13vw,78px)}.pre-title{font-size:10px}.hero-description{font-size:12px}.diya-caption{margin-top:270px;font-size:7px}.blessing-section,.virtues-section{padding:82px 7%}.blessing-grid{grid-template-columns:1fr;gap:18px;margin-top:36px}.blessing-heading h2{font-size:48px}.blessing-copy{padding-top:0}.virtues-grid{grid-template-columns:1fr;gap:11px;margin-top:34px}.virtue-card{min-height:0;padding:23px}.virtue-icon{margin-bottom:18px}.finale-section{padding:85px 7%;min-height:540px}.footer{padding:24px 6%;gap:16px;flex-wrap:wrap}.footer>span:nth-child(2){order:3;width:100%;text-align:center}.footer-year{font-size:7px}.wish-modal{padding:48px 25px 35px}.wish-modal h2{font-size:42px}}
 @media(max-height:760px) and (min-width:701px){.hero{height:720px;padding-top:75px}.diya-caption{margin-top:225px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Floating marigold petals add a gentle festive layer without blocking taps. */
+.petal-field{position:absolute;inset:0;height:100vh;overflow:hidden;pointer-events:none;z-index:0}
+.drifting-petal{position:absolute;left:var(--x);top:-24px;width:7px;height:12px;border-radius:80% 10% 80% 10%;background:linear-gradient(145deg,#ffd98a,#c86b3e);opacity:0;filter:drop-shadow(0 0 5px rgba(255,183,94,.35));animation:petal-drift var(--duration) linear var(--delay) infinite}
+.drifting-petal:nth-child(3n){width:5px;height:9px;background:linear-gradient(145deg,#f8d6a1,#b75c43)}
+.drifting-petal:nth-child(4n){border-radius:50%;width:4px;height:4px;background:#ffe3a8}
+@keyframes petal-drift{0%{transform:translate3d(0,-4vh,0) rotate(0deg);opacity:0}10%{opacity:.72}50%{transform:translate3d(35px,52vh,0) rotate(240deg)}90%{opacity:.55}100%{transform:translate3d(-28px,108vh,0) rotate(520deg);opacity:0}}
+.finale-blessing{display:flex;justify-content:center;align-items:center;gap:17px;margin:34px auto 0;color:#e8c28a;font-family:'Playfair Display',serif;font-style:italic;font-size:16px}
+.finale-blessing span:first-child,.finale-blessing span:last-child{font-size:20px;filter:drop-shadow(0 0 12px rgba(255,173,70,.65));animation:lamp-glow 2.8s ease-in-out infinite alternate}
+.finale-blessing span:last-child{animation-delay:1.4s}
+@keyframes lamp-glow{from{transform:translateY(0) scale(.95);filter:drop-shadow(0 0 5px rgba(255,173,70,.35))}to{transform:translateY(-5px) scale(1.08);filter:drop-shadow(0 0 16px rgba(255,173,70,.85))}}
+.share-button{min-width:175px}
+@media(prefers-reduced-motion:reduce){.drifting-petal,.finale-blessing span{animation:none!important}.drifting-petal{display:none}}
