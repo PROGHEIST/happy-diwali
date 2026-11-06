@@ -1,11 +1,17 @@
-import { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Sparkles, Stars, Text3D, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Volume2, VolumeX, Sparkles as SparkleIcon, Send, Heart, MoonStar, Flame, Gift, ArrowDown, Copy, Check } from 'lucide-react';
 
-const gold = '#ffd782';
+// Keep the greeting UI usable even on browsers/devices where WebGL is unavailable.
+class SceneErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error) { console.warn('3D scene unavailable; showing the greeting without WebGL.', error); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 
 function Flame3D() {
   const flame = useRef();
@@ -136,9 +142,16 @@ export default function App() {
   return (
     <main className="page-shell">
       <div className="canvas-layer" aria-hidden="true">
-        <Canvas camera={{ position: [0, 0, 9], fov: 45 }} dpr={[1, 1.7]} gl={{ antialias: true, alpha: false }}>
-          <Scene />
-        </Canvas>
+        <SceneErrorBoundary>
+          <Canvas
+            camera={{ position: [0, 0, 9], fov: 45 }}
+            dpr={[1, 1.25]}
+            gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
+            fallback={null}
+          >
+            <Scene />
+          </Canvas>
+        </SceneErrorBoundary>
       </div>
       <div className="ambient ambient-one" /><div className="ambient ambient-two" />
       <header className="topbar">
