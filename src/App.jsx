@@ -1,9 +1,9 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Sparkles, Stars, Text3D, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Volume2, VolumeX, Sparkles as SparkleIcon, Send, Heart, MoonStar, Flame, Gift, ArrowDown, Copy, Check } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles as SparkleIcon, Heart, Flame, Gift, ArrowDown } from 'lucide-react';
 
 // Keep the greeting UI usable even on browsers/devices where WebGL is unavailable.
 class SceneErrorBoundary extends React.Component {
@@ -124,20 +124,53 @@ function Fireworks({ active }) {
 export default function App() {
   const [sound, setSound] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [name, setName] = useState('');
+  const audioRef = useRef(null);
   const reduced = useReducedMotion();
   const greeting = 'May your home glow with happiness, your heart shine with peace, and every new beginning sparkle with endless possibilities. Wishing you and your loved ones a beautiful and prosperous Diwali!';
 
-  const copyGreeting = async () => {
-    try {
-      await navigator.clipboard.writeText(`✨ Happy Diwali! ✨\n\n${greeting}\n\n— With love, ${name.trim() || 'Your well-wisher'}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
-    } catch {
-      setCopied(false);
+  const toggleSound = async () => {
+    if (sound) {
+      const audio = audioRef.current;
+      if (audio) {
+        const now = audio.context.currentTime;
+        audio.master.gain.cancelScheduledValues(now);
+        audio.master.gain.setTargetAtTime(0, now, .25);
+        window.setTimeout(() => {
+          audio.oscillators.forEach(osc => { try { osc.stop(); } catch {} });
+          audio.context.close();
+        }, 900);
+        audioRef.current = null;
+      }
+      setSound(false);
+      return;
     }
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const context = new AudioContext();
+      await context.resume();
+      const master = context.createGain();
+      master.gain.setValueAtTime(0, context.currentTime);
+      master.gain.setTargetAtTime(.035, context.currentTime, .8);
+      master.connect(context.destination);
+      const oscillators = [174.61, 261.63, 349.23].map((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const voice = context.createGain();
+        oscillator.type = index === 0 ? 'sine' : 'triangle';
+        oscillator.frequency.value = frequency;
+        voice.gain.value = index === 0 ? .42 : .16;
+        oscillator.connect(voice); voice.connect(master); oscillator.start();
+        return oscillator;
+      });
+      audioRef.current = { context, master, oscillators };
+      setSound(true);
+    } catch (error) { console.warn('Audio could not be started.', error); }
   };
+
+  useEffect(() => () => {
+    const audio = audioRef.current;
+    if (audio) { audio.oscillators.forEach(osc => { try { osc.stop(); } catch {} }); audio.context.close(); audioRef.current = null; }
+  }, []);
 
   return (
     <main className="page-shell">
@@ -153,10 +186,10 @@ export default function App() {
           </Canvas>
         </SceneErrorBoundary>
       </div>
-      <div className="ambient ambient-one" /><div className="ambient ambient-two" />
+      <div className="ambient ambient-one" /><div className="ambient ambient-two" /><div className="petal-field" aria-hidden="true">{Array.from({ length: 18 }, (_, i) => <i key={i} className="drifting-petal" style={{ "--i": i, "--x": ((i * 37) % 100) + "%", "--delay": ((i % 9) * -2.3) + "s", "--duration": (15 + (i % 6) * 2) + "s" }} />)}</div>
       <header className="topbar">
         <a className="brand" href="#" aria-label="Deepavali home"><span className="brand-mark">✺</span><span>DEEP<span className="brand-gold">AVALI</span></span></a>
-        <div className="topbar-right"><span className="edition"><span className="live-dot" /> A FESTIVAL OF LIGHTS</span><button className="sound-button" onClick={() => setSound(v => !v)} aria-label={sound ? 'Turn sound off' : 'Turn sound on'}>{sound ? <Volume2 size={16}/> : <VolumeX size={16}/>}<span>{sound ? 'Sound on' : 'Sound off'}</span></button></div>
+        <div className="topbar-right"><span className="edition"><span className="live-dot" /> A FESTIVAL OF LIGHTS</span><button className="sound-button" onClick={toggleSound} aria-label={sound ? 'Turn sound off' : 'Turn sound on'}>{sound ? <Volume2 size={16}/> : <VolumeX size={16}/>}<span>{sound ? 'Sound on' : 'Sound off'}</span></button></div>
       </header>
 
       <section className="hero">
@@ -202,7 +235,7 @@ export default function App() {
         <p className="finale-overline">FROM OUR HEARTS TO YOURS</p>
         <h2>Light up the world<br/><em>by being you.</em></h2>
         <p className="finale-sub">Wishing you a Diwali that's as wonderful as you are.</p>
-        <div className="sender-row"><input value={name} onChange={e => setName(e.target.value)} maxLength={36} placeholder="Your name (optional)" aria-label="Your name"/><button onClick={copyGreeting} className="share-button">{copied ? <Check size={16}/> : <Copy size={16}/>} {copied ? 'Copied!' : 'Copy your wish'}</button></div>
+        <div className="finale-blessing"><span>🪔</span><span>May your life always be full of light.</span><span>🪔</span></div>
         <span className="finale-sparkle">✧　✦　✧</span>
       </section>
 
@@ -216,7 +249,7 @@ export default function App() {
             <h2>Happy <em>Diwali!</em></h2>
             <p>{greeting}</p>
             <div className="modal-divider">✦ ✧ ✦</div>
-            <button className="share-button modal-share" onClick={copyGreeting}>{copied ? <Check size={16}/> : <Copy size={16}/>} {copied ? 'Copied!' : 'Copy this wish'}</button>
+            <button className="share-button modal-share" onClick={() => setRevealed(false)}>Let the light spread <span aria-hidden="true">✦</span></button>
           </motion.div>
         </motion.div>}
       </AnimatePresence>
